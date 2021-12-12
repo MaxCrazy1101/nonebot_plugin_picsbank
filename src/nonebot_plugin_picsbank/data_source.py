@@ -1,7 +1,7 @@
 import ujson as json
 import os
-from typing import Optional, Union, List
-from shana_bot.utils.image_utils import calculate_hamming_distance, dhash
+from typing import Optional
+from .utils import calculate_hamming_distance, dhash
 from nonebot.log import logger
 
 NULL_BANK = {

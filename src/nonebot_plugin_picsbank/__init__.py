@@ -3,18 +3,17 @@ from nonebot.log import logger
 from nonebot.plugin import on_message, on_command
 from nonebot.adapters.cqhttp import Event, GroupMessageEvent, PrivateMessageEvent, GROUP_ADMIN, GROUP_OWNER, Bot
 from nonebot.typing import T_State
-from shana_bot.utils.message_utils import get_message_images
-from shana_bot.utils.network_utils import get_pic_from_url
+from .utils import get_pic_from_url, get_message_images
 from .data_source import pic_bank as pb
 from nonebot.permission import SUPERUSER
 
 __author__ = "Alex Newton"
 __usage__ = """
-    [全局][匹配率+(64以下数字)][sid(任意特殊标记，可用于删除词条)]发[图片]答....  例:全局匹配率5sidnihao发[这是一张图片]答我爱你
+    pb添加 [全局][匹配率+(64以下数字)][sid(任意特殊标记，可用于删除词条)]发[图片]答....  例:全局匹配率5sidnihao发[这是一张图片]答我爱你
     pb删除 [sid/图片] 
 """
-__shana_version__ = '0.1.0'
-__shana_plugin_name__ = "pics_bank"
+__version__ = '0.1.0'
+__plugin_name__ = "pics_bank"
 
 
 async def check_img(bot: Bot, event: Event, state: T_State) -> bool:
@@ -23,7 +22,7 @@ async def check_img(bot: Bot, event: Event, state: T_State) -> bool:
     return len(img_list) != 0
 
 
-pics_bank = on_message(rule=check_img, priority=98)
+pics_bank = on_message(rule=check_img, priority=98)  # 优先级比word_bank略高
 
 
 @pics_bank.handle()
