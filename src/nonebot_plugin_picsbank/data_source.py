@@ -56,13 +56,14 @@ class PicBank(object):
         with open(self.data_path, 'w', encoding='utf-8') as f:
             json.dump(self._data, f, ensure_ascii=False, indent=4)
 
-    def set(self,
+    def set(
+            self,
             image_bytes: bytes,
             return_str: str,
             group_id: str = '0',
             limit: int = 5,
             sid: str = ''
-            ) -> str:
+    ) -> str:
         """
         新增词条
         :param sid: 特殊的标志
@@ -91,11 +92,12 @@ class PicBank(object):
         self.__save()
         return '设置成功'
 
-    def delete(self,
-               image_bytes: Optional[bytes] = None,
-               special_id: Optional[str] = None,
-               group_id: str = '0'
-               ) -> str:
+    def delete(
+            self,
+            image_bytes: Optional[bytes] = None,
+            special_id: Optional[str] = None,
+            group_id: str = '0'
+    ) -> str:
         """
         删除词条
         :param special_id: 利用sid删除
@@ -132,7 +134,6 @@ class PicBank(object):
     def clean(self, group_id: str = '0') -> str:
         """
         清空某个对象的词库
-
         :param group_id: 为'0'时是全局词库
         :return:
         """
@@ -140,15 +141,14 @@ class PicBank(object):
         self.__save()
         return f'{group_id}词库清空成功'
 
-    def _clean_all(self):
+    def clean_all(self):
         """
         清空所有词库
-
         :return:
         """
         self._data = NULL_BANK
         self.__save()
-        return "清空成功"
+        return "所有词库清空成功"
 
 
 pic_bank = PicBank()
