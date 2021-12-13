@@ -47,9 +47,17 @@ pb添加 : 指令，添加一个词条
 
 ## 即刻开始
 
-   ```bash
-   pip install nonebot_plugin_picsbank
-   ```
+- 使用 nb-cli
+
+```
+nb plugin install nonebot_plugin_picsbank
+```
+
+- 使用 pip
+
+```
+pip install nonebot_plugin_picsbank
+```
 
 ### 常见问题
 
