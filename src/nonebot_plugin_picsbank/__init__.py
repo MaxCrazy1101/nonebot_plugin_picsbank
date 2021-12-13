@@ -1,10 +1,9 @@
 import re
 from nonebot.log import logger
 from nonebot.plugin import on_message, on_command
-from nonebot.adapters.cqhttp import (Event, GroupMessageEvent, PrivateMessageEvent, GROUP_ADMIN, GROUP_OWNER, Bot,
-                                     Message, MessageEvent, unescape)
+from nonebot.adapters.cqhttp import Event, GroupMessageEvent, PrivateMessageEvent, GROUP_ADMIN, GROUP_OWNER, Bot
 from nonebot.typing import T_State
-from .utils import get_pic_from_url, get_message_images, parse
+from .utils import get_pic_from_url, get_message_images
 from .data_source import pic_bank as pb
 from nonebot.permission import SUPERUSER
 
@@ -29,8 +28,6 @@ pics_bank = on_message(rule=check_img, priority=98)  # 优先级比word_bank略�
 @pics_bank.handle()
 async def _(bot: Bot, event: GroupMessageEvent, state: T_State):
     msg = pb.match(await get_pic_from_url(state['img_list'][0]), str(event.group_id))
-    msg = Message(unescape(
-        parse(msg=msg, nickname=event.sender.card or event.sender.nickname, sender_id=event.sender.user_id)))
     if msg == '':
         await pics_bank.finish()
     await pics_bank.finish(msg)
@@ -39,8 +36,6 @@ async def _(bot: Bot, event: GroupMessageEvent, state: T_State):
 @pics_bank.handle()
 async def _(bot: Bot, event: PrivateMessageEvent, state: T_State):
     msg = pb.match(await get_pic_from_url(state['img_list'][0]))
-    msg = Message(unescape(
-        parse(msg=msg, nickname=event.sender.nickname, sender_id=event.sender.user_id)))
     if msg == '':
         await pics_bank.finish()
     await pics_bank.finish(msg)
@@ -85,45 +80,3 @@ async def _(bot: Bot, event: GroupMessageEvent, state: T_State):
     else:
         await pb_del_cmd.finish(
             pb.delete(image_bytes=await get_pic_from_url(image_list[0]), **param))
-
-
-async def pb_del_first_handle(bot: Bot, event: MessageEvent, state: T_State):
-    msg = str(event.message).strip()
-    if msg:
-        state['is_sure'] = msg
-
-
-pb_del_all_cmd = on_command('pb删除词库', permission=SUPERUSER | GROUP_OWNER | GROUP_ADMIN, handlers=[pb_del_first_handle])
-pb_del_all_admin = on_command('pb删除全局词库', permission=SUPERUSER, handlers=[pb_del_first_handle])
-pb_del_all_bank = on_command('pb删除全部词库', permission=SUPERUSER, handlers=[pb_del_first_handle])
-
-
-@pb_del_all_cmd.got('is_sure', prompt='此命令将会清空您的群聊词库，确定请发送 yes/y')
-async def _(bot: Bot, event: MessageEvent, state: T_State):
-    if state['is_sure'] in ['yes', 'y']:
-        if isinstance(event, GroupMessageEvent):
-            await pb_del_all_cmd.finish(pb.clean(str(event.group_id)))
-        else:
-            group_id = str(event.get_message()).strip()
-            if group_id.isdigit():
-                await pb_del_all_cmd.finish(pb.clean(group_id))  # 私人对话时清空指定群聊的词库
-            else:
-                await pb_del_all_cmd.finish('参数错误,请使用 pb删除全局词库 来删除全局词库')
-    else:
-        await pb_del_all_cmd.finish('命令取消')
-
-
-@pb_del_all_admin.got('is_sure', prompt='此命令将会清空您的全局词库，确定请发送 yes/y')
-async def _(bot: Bot, event: MessageEvent, state: T_State):
-    if state['is_sure'] in ['yes', 'y']:
-        await pb_del_all_admin.finish(pb.clean())
-    else:
-        await pb_del_all_admin.finish('命令取消')
-
-
-@pb_del_all_bank.got('is_sure', prompt='此命令将会清空您的全部词库，确定请发送 yes/y')
-async def _(bot: Bot, event: MessageEvent, state: T_State):
-    if state['is_sure'] in ['yes', 'y']:
-        await pb_del_all_bank.finish(pb.clean_all())
-    else:
-        await pb_del_all_bank.finish('命令取消')
