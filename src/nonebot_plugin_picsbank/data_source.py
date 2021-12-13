@@ -48,6 +48,7 @@ class PicBank(object):
         for pic_inf in self._data['0']:
             if calculate_hamming_distance(hash_str, pic_inf['hash_str']) < pic_inf['limit']:
                 return pic_inf['return']
+        return ''
 
     def __save(self):
         """

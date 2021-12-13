@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot_plugin_picsbank"
-version = "0.1.1"
+version = "0.1.2"
 description = ""
 authors = ["Alex Newton <sharenfan222@gmail.com>"]
 license = "MIT"

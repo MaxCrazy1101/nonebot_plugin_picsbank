@@ -13,7 +13,7 @@ __usage__ = """
     pb添加 [全局][匹配率+(64以下数字)][sid(任意特殊标记，可用于删除词条)]发[图片]答....  例:全局匹配率5sidnihao发[这是一张图片]答我爱你
     pb删除 [sid/图片] 
 """
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 __plugin_name__ = "pics_bank"
 
 
@@ -29,20 +29,20 @@ pics_bank = on_message(rule=check_img, priority=98)  # 优先级比word_bank略�
 @pics_bank.handle()
 async def _(bot: Bot, event: GroupMessageEvent, state: T_State):
     msg = pb.match(await get_pic_from_url(state['img_list'][0]), str(event.group_id))
-    msg = Message(unescape(
-        parse(msg=msg, nickname=event.sender.card or event.sender.nickname, sender_id=event.sender.user_id)))
     if msg == '':
         await pics_bank.finish()
+    msg = Message(unescape(
+        parse(msg=msg, nickname=event.sender.card or event.sender.nickname, sender_id=event.sender.user_id)))
     await pics_bank.finish(msg)
 
 
 @pics_bank.handle()
 async def _(bot: Bot, event: PrivateMessageEvent, state: T_State):
     msg = pb.match(await get_pic_from_url(state['img_list'][0]))
-    msg = Message(unescape(
-        parse(msg=msg, nickname=event.sender.nickname, sender_id=event.sender.user_id)))
     if msg == '':
         await pics_bank.finish()
+    msg = Message(unescape(
+        parse(msg=msg, nickname=event.sender.nickname, sender_id=event.sender.user_id)))
     await pics_bank.finish(msg)
 
 
