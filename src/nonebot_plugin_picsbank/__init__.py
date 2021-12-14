@@ -77,7 +77,7 @@ async def _(bot: Bot, event: GroupMessageEvent, state: T_State):
     image_list = get_message_images(event.json())
     param = {}
     if '全局' not in msg:
-        param['group_id'] = event.group_id
+        param['group_id'] = str(event.group_id)
     else:
         msg.replace('全局', '')
     if len(image_list) == 0:
