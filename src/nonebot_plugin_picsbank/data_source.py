@@ -107,12 +107,12 @@ class PicBank(object):
         :return:
         """
         if not image_bytes and not special_id:
-            raise "删除时 图片和sid 参数不能同时为空"
+            return "删除时 图片和sid 参数不能同时为空"
         elif special_id is None:
             hash_str: int = hash_method(image_bytes)
             try:
                 for pic_inf in self._data[group_id]:
-                    if pic_inf['hash_str'] == hash_str:
+                    if calculate_hamming_distance(pic_inf['hash_str'], hash_str) <= pic_inf['limit']:
                         self._data[group_id].remove(pic_inf)
                         self.__save()
                         return '删除成功'

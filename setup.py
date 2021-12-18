@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="nonebot_plugin_picsbank",
-    version="0.1.3",
+    version="0.1.4",
     author="Alex Newton",
     author_email="sharenfan222@gmail.com",
     description="a picture response plugin",

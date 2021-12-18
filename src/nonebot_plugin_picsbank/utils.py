@@ -126,8 +126,16 @@ def parse_at(msg: str) -> str:
     return re.sub(r'/at(\d+)', r'[CQ:at,qq=\1]', msg)
 
 
-def parse_self(msg: str, **kwargs) -> str:
-    return parse_at_self(re.sub(r'/self', str(kwargs.get('nickname', '')), msg), **kwargs)
+def parse_atbot(msg: str, bot_id: int) -> (str, bool):
+    return re.sub(r'/atbot', f'[CQ:at,qq={bot_id}] ', msg), '/atbot' in msg
+
+
+def parse_command(msg: str) -> (str, bool):
+    return re.sub(r"/command", "", msg), '/command' in msg
+
+
+def parse_nickname(msg: str, **kwargs) -> str:
+    return parse_at_self(re.sub(r'/nk', str(kwargs.get('nickname', '')), msg), **kwargs)
 
 
 def parse_at_self(msg: str, **kwargs) -> str:
@@ -146,5 +154,6 @@ def parse_ban(msg: str) -> Optional[int]:
         return int(duration.strip() or 300)
 
 
-def parse(msg, **kwargs) -> str:
-    return parse_at(parse_self(msg, **kwargs))
+def parse(msg, **kwargs) -> (str, bool, bool, bool):
+    msg, to_bot = parse_atbot(parse_nickname(msg, **kwargs), kwargs['bot_id'])
+    return *(parse_command(parse_at(msg))), to_bot
