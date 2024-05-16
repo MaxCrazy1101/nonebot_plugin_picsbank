@@ -103,7 +103,7 @@ async def _(bot: Bot, event: Event, state: T_State, user: UserInfo = EventUserIn
         await handle_event(bot, event_new)
         await pics_bank.finish()
     else:
-        await pics_bank.finish(msg)
+        await pics_bank.finish(send_msg)
 
 
 pb_add_cmd = Alconna(
@@ -180,7 +180,7 @@ async def _(
     if not img.url:
         await pb_add.finish("图片链接获取失败")
     content = re.sub(r"/at(\d+)", lambda mat: f"{{:At(user, {mat[1]})}}", answer)
-    content = content.replace("/atself", "{:At(user, sender_id)}")
+    content = content.replace("/atself", "{:At(user, target=sender_id)}")
     content = content.replace("/self", "{nickname}")
     param = {"return_str": content, "limit": limit.result if limit.available else 5}
     if is_global.result and not is_superuser:
