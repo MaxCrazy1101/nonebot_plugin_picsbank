@@ -15,10 +15,11 @@ require("nonebot_plugin_waiter")
 require("nonebot_plugin_alconna")
 require("nonebot_plugin_userinfo")
 
+from nepattern import WIDE_BOOLEAN
 from nonebot_plugin_waiter import prompt
 from nonebot_plugin_userinfo import UserInfo, EventUserInfo
 from arclet.alconna import Args, Option, Alconna, CommandMeta, store_true
-from nonebot_plugin_alconna import Image, Match, Query, MsgTarget, UniMessage, on_alconna
+from nonebot_plugin_alconna import Image, Match, Query, UniMsg, MsgTarget, UniMessage, on_alconna
 
 from .utils import get_pic_from_url
 from .data_source import pic_bank as pb
@@ -273,6 +274,12 @@ pb_del_all_bank = on_command(
 )
 
 
+async def _get_ans(msg: UniMsg):
+    text = msg.extract_plain_text()
+    result = WIDE_BOOLEAN.validate(text, False)
+    return result.value()
+
+
 @pb_del_all.handle()
 async def _(
     target: MsgTarget,
@@ -282,33 +289,23 @@ async def _(
 ):
     if is_global.result and not is_superuser:
         pb_add.skip()
-    ans = await prompt("此命令将会清空您的群聊词库，确定请发送 yes/y", timeout=30)
+    ans = await prompt("此命令将会清空您的群聊词库，确定请发送 yes/y", _get_ans, timeout=30)
     if not ans:
         await pb_del_all.finish("命令取消")
-    text = ans.extract_plain_text()
-    if not text:
-        await pb_del_all.finish("命令取消")
-    if text.lower in {"yes", "y"}:
-        if is_global.result:
-            pb.clean()
-            await pb_del_all.finish("全局词库清理成功")
-        if target.private:
-            if not group_id.available:
-                await pb_del_all.finish("非全局模式请传入群号")
-            await pb_del_all.finish(pb.clean(group_id.result))  # 私人对话时清空指定群聊的词库
-        else:
-            await pb_del_all.finish(pb.clean(target.id))
-    await pb_del_all.finish("命令取消")
+    if is_global.result:
+        pb.clean()
+        await pb_del_all.finish("全局词库清理成功")
+    if target.private:
+        if not group_id.available:
+            await pb_del_all.finish("非全局模式请传入群号")
+        await pb_del_all.finish(pb.clean(group_id.result))  # 私人对话时清空指定群聊的词库
+    else:
+        await pb_del_all.finish(pb.clean(target.id))
 
 
 @pb_del_all_bank.handle()
 async def _():
-    ans = await prompt("此命令将会清空全部词库，确定请发送 yes/y", timeout=30)
+    ans = await prompt("此命令将会清空全部词库，确定请发送 yes/y", _get_ans, timeout=30)
     if not ans:
         await pb_del_all.finish("命令取消")
-    text = ans.extract_plain_text()
-    if not text:
-        await pb_del_all.finish("命令取消")
-    if text.lower in {"yes", "y"}:
-        await pb_del_all_bank.finish(pb.clean_all())
-    await pb_del_all.finish("命令取消")
+    await pb_del_all_bank.finish(pb.clean_all())
