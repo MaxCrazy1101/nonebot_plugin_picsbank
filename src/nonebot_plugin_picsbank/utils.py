@@ -1,44 +1,24 @@
-try:
-    import ujson as json
-except ModuleNotFoundError:
-    import json
-from nonebot.typing import Union, Optional
+import io
+from typing import Union
+
+import cv2
 import aiohttp
 import numpy as np
-import cv2
 from PIL import Image
-import io
-import re
 
-
-def get_message_images(data: str) -> list:
-    """
-    获取消息中所有的 图片 的链接
-    :param data:
-    :return:
-    """
-    try:
-        img_list = []
-        data = json.loads(data)
-        for msg in data["message"]:
-            if msg["type"] == "image":
-                img_list.append(msg["data"]["url"])
-        return img_list
-    except KeyError:
-        return []
+headers = {
+    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",  # noqa: E501
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53",  # noqa: E501
+}
 
 
 async def get_pic_from_url(url: str) -> bytes:
     async with aiohttp.ClientSession() as session:
-        headers = {
-            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/95.0.4638.69 Safari/537.36 Edg/95.0.1020.53",
-        }
         try:
             async with session.get(url, headers=headers) as resp:
                 return await resp.read()
         except TimeoutError:
-            raise Exception("获取错误")
+            raise RuntimeError("获取错误")
 
 
 def calculate_hamming_distance(fingerprint1: int, fingerprint2: int) -> int:
@@ -52,7 +32,7 @@ def calculate_hamming_distance(fingerprint1: int, fingerprint2: int) -> int:
     mix = fingerprint1 ^ fingerprint2
     ans = 0
     while mix != 0:
-        mix &= (mix - 1)
+        mix &= mix - 1
         ans += 1
     return ans
 
@@ -63,8 +43,7 @@ def PILImageToCV(img: Image.Image) -> np.ndarray:
     :param img:
     :return:
     """
-    img = cv2.cvtColor(np.asarray(img), cv2.COLOR_RGB2BGR)
-    return img
+    return cv2.cvtColor(np.asarray(img), cv2.COLOR_RGB2BGR)
 
 
 def bytes2cv(img_bytes: bytes) -> np.ndarray:
@@ -76,7 +55,7 @@ def bytes2cv(img_bytes: bytes) -> np.ndarray:
     return img_numpy
 
 
-def pre_hash(img: Union[Image.Image, np.ndarray, bytes], to_size: tuple = (8, 8)):
+def pre_hash(img: Union[Image.Image, np.ndarray, bytes], to_size: tuple[int, int] = (8, 8)):
     """
     hash前的预处理
     :param to_size: 转换的大小
@@ -92,7 +71,7 @@ def pre_hash(img: Union[Image.Image, np.ndarray, bytes], to_size: tuple = (8, 8)
     try:
         img_reformat = cv2.resize(img_reformat, to_size)
     except cv2.error:  # 对gif的特殊处理
-        frame = Image.open(io.BytesIO(img))
+        frame = Image.open(io.BytesIO(img))  # type: ignore
         img_reformat = PILImageToCV(frame)
         img_reformat = cv2.resize(img_reformat, to_size)
     # 转换灰度图
@@ -107,53 +86,12 @@ def dhash(img: Union[Image.Image, np.ndarray, bytes]) -> int:
     :return:64位dhash值
     """
     gray = pre_hash(img, (9, 8))
-    hash_str = ''
+    hash_str = ""
     # 每行前一个像素大于后一个像素为1，相反为0，生成哈希
     for i in range(8):
         for j in range(8):
             if gray[i, j] > gray[i, j + 1]:
-                hash_str = hash_str + '1'
+                hash_str = hash_str + "1"
             else:
-                hash_str = hash_str + '0'
+                hash_str = hash_str + "0"
     return int(hash_str, 2)
-
-
-def parse_cmd(pattern, msg: str) -> list:
-    return re.findall(pattern, msg, re.S)
-
-
-def parse_at(msg: str) -> str:
-    return re.sub(r'/at(\d+)', r'[CQ:at,qq=\1]', msg)
-
-
-def parse_atbot(msg: str, bot_id: int) -> (str, bool):
-    return re.sub(r'/atbot', f'[CQ:at,qq={bot_id}] ', msg), '/atbot' in msg
-
-
-def parse_command(msg: str) -> (str, bool):
-    return re.sub(r"/command", "", msg), '/command' in msg
-
-
-def parse_nickname(msg: str, **kwargs) -> str:
-    return parse_at_self(re.sub(r'/nk', str(kwargs.get('nickname', '')), msg), **kwargs)
-
-
-def parse_at_self(msg: str, **kwargs) -> str:
-    sender_id = kwargs.get('sender_id', '')
-    if sender_id:
-        return re.sub(r'/atself', f"[CQ:at,qq={sender_id}]", msg)
-    else:
-        return msg
-
-
-def parse_ban(msg: str) -> Optional[int]:
-    matcher = re.findall(r'/ban([ \d]*)', msg)
-    if matcher:
-        duration = matcher[0]
-        # 默认 5 分钟
-        return int(duration.strip() or 300)
-
-
-def parse(msg, **kwargs) -> (str, bool, bool, bool):
-    msg, to_bot = parse_atbot(parse_nickname(msg, **kwargs), kwargs['bot_id'])
-    return *(parse_command(parse_at(msg))), to_bot
